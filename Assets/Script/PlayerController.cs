@@ -11,6 +11,9 @@ public class PlayerController : MonoBehaviour
     public float moveSpeed = 5f;
     public float jumpForce = 10f;
 
+    public GameObject camera_pos;
+    public Vector3 camera_offset;
+    public float smoothSpeed = 0.125f;
 
     public Transform groundCheck;
     public float groundCheckRadius = 0.2f;
@@ -43,6 +46,14 @@ public class PlayerController : MonoBehaviour
 
         finalSpread = spreadIdle;
     }
+
+    void FixedUpdate()
+    {
+        Vector3 smoothPos = Vector3.Lerp(camera_pos.transform.position, transform.position + camera_offset, smoothSpeed);
+        smoothPos.z = -10;
+        camera_pos.transform.position = smoothPos;
+    }
+
 
     void Update()
     {
