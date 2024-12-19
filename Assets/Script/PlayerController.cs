@@ -1,13 +1,12 @@
-using System.Net.Sockets;
-using System.Threading;
-using Unity.VisualScripting;
-using UnityEditor;
-using UnityEditor.Rendering;
 using UnityEngine;
+using TMPro;
+using UnityEngine.UI;
+using Unity.VisualScripting;
+using UnityEditor.PackageManager;
+
 
 public class PlayerController : MonoBehaviour
 {
-
     public float moveSpeed = 5f;
     public float jumpForce = 10f;
 
@@ -34,16 +33,27 @@ public class PlayerController : MonoBehaviour
     public int spreadIdle = 10;
     public int spreadCrouch = 10;
     public int fireRange = 10;
+    public Slider slider;
+    public int shootsBeforeCoolDown = 10;
+    public float coolDownSpeed = 0.01f;
+    public PlayerGetDMG playerGetDMG;
     private bool isGrounded;
     private Vector3 previousPosition;
     private bool secondJump = true;
     private int finalSpread;
     private float currentCoolDown = 0;
-    public AudioSource audioSource;
+    private bool coolDownLock = false;
+    public AudioSource fire;
+    public AudioSource empty;
+    public float currentCoolDownSlider = 0;
+    public GameObject[] hearts;
+    public int health = 5;
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
-
+        slider.maxValue = shootsBeforeCoolDown;
+        slider.value = 0;
         finalSpread = spreadIdle;
     }
 
@@ -52,11 +62,36 @@ public class PlayerController : MonoBehaviour
         Vector3 smoothPos = Vector3.Lerp(camera_pos.transform.position, transform.position + camera_offset, smoothSpeed);
         smoothPos.z = -10;
         camera_pos.transform.position = smoothPos;
-    }
 
+        if (currentCoolDownSlider > 0)
+        {
+            if (currentCoolDownSlider > shootsBeforeCoolDown * .95)
+            {
+                coolDownLock = true;
+                slider.fillRect.GetComponentInChildren<Image>().color = Color.red;
+
+            }
+            currentCoolDownSlider -= coolDownSpeed;
+            slider.value = currentCoolDownSlider;
+        }
+        if (currentCoolDownSlider < shootsBeforeCoolDown * .05)
+        {
+            slider.fillRect.GetComponentInChildren<Image>().color = Color.green;
+            coolDownLock = false;
+        }
+        if (!coolDownLock)
+        {
+            slider.fillRect.GetComponentInChildren<Image>().color = Color.Lerp(Color.green, Color.red, slider.normalizedValue);
+
+        }
+    }
 
     void Update()
     {
+        if (health <= 0) {
+            animator.Play("Dead");
+            return;
+        }
         float moveInput = Input.GetAxis("Horizontal");
         rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
 
@@ -101,10 +136,12 @@ public class PlayerController : MonoBehaviour
 
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadius, groundLayer);
 
-        if (Input.GetButton("Fire1") && Time.time > currentCoolDown)
+        if (Input.GetButton("Fire1") && Time.time > currentCoolDown && currentCoolDownSlider < shootsBeforeCoolDown && !coolDownLock)
         {
-            audioSource.pitch = Random.Range(0.9f, 1.1f);
-            audioSource.Play();
+            currentCoolDownSlider += 1;
+
+            fire.pitch = Random.Range(0.9f, 1.1f);
+            fire.Play();
 
             currentCoolDown = Time.time + coolDown;
 
@@ -112,7 +149,6 @@ public class PlayerController : MonoBehaviour
             Vector3 position = muzzle.transform.position;
 
             if (Input.GetKey(KeyCode.S)) position = SetYRelative(muzzle.transform, -0.122f);
-
 
             float rand = Random.Range(-finalSpread, finalSpread) + muzzle.transform.rotation.eulerAngles.z;
             Quaternion rotation = Quaternion.AngleAxis(rand, new Vector3(0, 0, 1));
@@ -124,9 +160,17 @@ public class PlayerController : MonoBehaviour
 
             if (hit && hit.distance < fireRange && hit.collider.CompareTag("Enemy"))
             {
-                Destroy(hit.collider.gameObject);
+                EnemyNight2 enemyNight2 = hit.collider.gameObject.GetComponent<EnemyNight2>();
+                enemyNight2.GetDMG();
             }
         }
+
+        if (Input.GetButton("Fire1") && Time.time > currentCoolDown && coolDownLock) {
+            empty.pitch = Random.Range(0.9f, 1.1f);
+            empty.Play();
+        }
+
+
     }
 
     private Vector3 SetYRelative(Transform t, float n)
@@ -142,5 +186,16 @@ public class PlayerController : MonoBehaviour
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(groundCheck.position, groundCheckRadius);
         }
+    }
+
+    void OnCollisionStay2D(Collision2D collision)
+    {
+
+    }
+
+    public void GetDmg() {
+        health -= 1;
+        Destroy(hearts[health]);
+        playerGetDMG.AnimateDMG(health);
     }
 }
