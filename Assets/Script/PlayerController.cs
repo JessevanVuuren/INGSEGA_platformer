@@ -88,7 +88,8 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        if (health <= 0) {
+        if (health <= 0)
+        {
             animator.Play("Dead");
             return;
         }
@@ -158,14 +159,23 @@ public class PlayerController : MonoBehaviour
             RaycastHit2D hit = Physics2D.Raycast(position, rotation * Vector3.right);
             Debug.DrawLine(position, position + rotation * Vector3.right * fireRange, Color.red, 0.5f);
 
-            if (hit && hit.distance < fireRange && hit.collider.CompareTag("Enemy"))
+            if (hit && hit.distance < fireRange)
             {
-                EnemyNight2 enemyNight2 = hit.collider.gameObject.GetComponent<EnemyNight2>();
-                enemyNight2.GetDMG();
+                if (hit.collider.CompareTag("Enemy"))
+                {
+                    EnemyNight2 enemyNight2 = hit.collider.gameObject.GetComponent<EnemyNight2>();
+                    enemyNight2.GetDMG();
+                }
+                if (hit.collider.CompareTag("Bird"))
+                {
+                    Bird bird = hit.collider.gameObject.GetComponent<Bird>();
+                    bird.GetDMG();
+                }
             }
         }
 
-        if (Input.GetButton("Fire1") && Time.time > currentCoolDown && coolDownLock) {
+        if (Input.GetButton("Fire1") && Time.time > currentCoolDown && coolDownLock)
+        {
             empty.pitch = Random.Range(0.9f, 1.1f);
             empty.Play();
         }
@@ -188,12 +198,18 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void OnCollisionStay2D(Collision2D collision)
+    void OnTriggerEnter2D(Collider2D collision)
     {
-
+        if (collision.gameObject.CompareTag("Bird"))
+        {
+            Bird bird = collision.gameObject.GetComponent<Bird>();
+            GetDmg();
+            bird.Explode();
+        }
     }
 
-    public void GetDmg() {
+    public void GetDmg()
+    {
         health -= 1;
         Destroy(hearts[health]);
         playerGetDMG.AnimateDMG(health);
