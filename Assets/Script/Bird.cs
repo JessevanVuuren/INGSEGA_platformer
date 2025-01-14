@@ -11,6 +11,7 @@ public class Bird : MonoBehaviour
     public float health = 2;
     public GameObject explosion;
     public SpriteRenderer spriteRenderer;
+    public float outerLook = 10;
 
     private Vector3 playerPos;
     public GameObject player;
@@ -31,7 +32,8 @@ public class Bird : MonoBehaviour
         actualHealth -= 1;
         healthBar.SetHealth(actualHealth, health);
 
-        if (actualHealth <= 0) {
+        if (actualHealth <= 0)
+        {
             Explode();
         }
     }
@@ -44,7 +46,7 @@ public class Bird : MonoBehaviour
             return;
         }
 
-        
+
         playerPos = player.transform.position;
 
     }
@@ -52,19 +54,30 @@ public class Bird : MonoBehaviour
     void FixedUpdate()
     {
 
-        rb.MovePosition(Vector3.MoveTowards(transform.position, playerPos, speed * Time.deltaTime));
+        if (Vector3.Distance(transform.position, playerPos) < outerLook)
+        {
 
-        Vector3 direction = playerPos - transform.position;
-        float angle = Mathf.Atan2(direction.x, direction.y);
-        
-        spriteRenderer.flipY = angle < 0;
+            rb.MovePosition(Vector3.MoveTowards(transform.position, playerPos, speed * Time.deltaTime));
 
-        rb.MoveRotation(-(angle * Mathf.Rad2Deg) + 90);
+            Vector3 direction = playerPos - transform.position;
+            float angle = Mathf.Atan2(direction.x, direction.y);
+
+            spriteRenderer.flipY = angle < 0;
+
+            rb.MoveRotation(-(angle * Mathf.Rad2Deg) + 90);
+        }
     }
 
     public void Explode()
     {
         Instantiate(explosion, transform.position, Quaternion.identity);
         Destroy(gameObject);
+    }
+
+
+    void OnDrawGizmos()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, outerLook);
     }
 }

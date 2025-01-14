@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerGetDMG : MonoBehaviour
 {
@@ -9,23 +10,27 @@ public class PlayerGetDMG : MonoBehaviour
     public SpriteRenderer spriteRenderer;
     public GameObject player;
 
-    public void AnimateDMG(float health) {
+    public void AnimateDMG(float health)
+    {
         StartCoroutine(Blink());
     }
 
-    private IEnumerator Blink() {
+    private IEnumerator Blink()
+    {
         for (int i = 0; i < loop; i++)
-        {  
+        {
             spriteRenderer.color = Color.red;
-            yield return new WaitForSeconds(red); 
+            yield return new WaitForSeconds(red);
 
             spriteRenderer.color = Color.white;
             yield return new WaitForSeconds(white);
         }
     }
 
-    public void ReturnHome() {
+    public void ReturnHome()
+    {
         Destroy(player, 3f);
+        
     }
 
 }

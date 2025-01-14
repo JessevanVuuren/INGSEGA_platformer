@@ -1,9 +1,7 @@
-using UnityEngine;
-using TMPro;
+using UnityEngine.SceneManagement;
+using System.Collections;
 using UnityEngine.UI;
-using Unity.VisualScripting;
-using UnityEditor.PackageManager;
-
+using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
@@ -88,9 +86,17 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (transform.position.y < -10)
+        {
+            SceneManager.LoadScene(0);
+
+        }
+
+
         if (health <= 0)
         {
             animator.Play("Dead");
+            StartCoroutine(Home());
             return;
         }
         float moveInput = Input.GetAxis("Horizontal");
@@ -171,6 +177,12 @@ public class PlayerController : MonoBehaviour
                     Bird bird = hit.collider.gameObject.GetComponent<Bird>();
                     bird.GetDMG();
                 }
+
+                if (hit.collider.CompareTag("Bomb"))
+                {
+                    Bomb bomb = hit.collider.gameObject.GetComponent<Bomb>();
+                    bomb.GetDMG();
+                }
             }
         }
 
@@ -181,6 +193,12 @@ public class PlayerController : MonoBehaviour
         }
 
 
+    }
+
+    private IEnumerator Home()
+    {
+        yield return new WaitForSeconds(3);
+        SceneManager.LoadScene(0);
     }
 
     private Vector3 SetYRelative(Transform t, float n)
@@ -206,6 +224,24 @@ public class PlayerController : MonoBehaviour
             GetDmg();
             bird.Explode();
         }
+    }
+
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Bomb"))
+        {
+            Bomb bomb = collision.gameObject.GetComponent<Bomb>();
+            GetDmg();
+            GetDmg();
+            bomb.Explode();
+        }
+
+    }
+
+    public void playerDead()
+    {
+        SceneManager.LoadScene(0);
+
     }
 
     public void GetDmg()
